@@ -43,24 +43,21 @@ class PrimaryNetwork(nn.Module):
         self.z_dim = z_dim
         self.hope = HyperNetwork(z_dim=self.z_dim)
 
-        self.zs_size = [[1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1],
-                        [2, 1], [2, 2], [2, 2], [2, 2], [2, 2], [2, 2], [2, 2], [2, 2], [2, 2], [2, 2], [2, 2], [2, 2],
-                        [4, 2], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4]]
+        self.zs_size = [[1, 1], [1, 1], [2,1],[2,2], [2,2],[2,2],[4,2], [4, 4]]
 
-        self.filter_size = [[16,16], [16,16], [16,16], [16,16], [16,16], [16,16], [16,32], [32,32], [32,32], [32,32],
-                            [32,32], [32,32], [32,64], [64,64], [64,64], [64,64], [64,64], [64,64]]
+        self.filter_size = [[16,16], [16,32], [32,32], [32,64]]
 
         self.res_net = nn.ModuleList()
 
-        for i in range(18):
+        for i in range(4):
             down_sample = False
-            if i > 5 and i % 6 == 0:
+            if i in [1,3]:
                 down_sample = True
             self.res_net.append(ResNetBlock(self.filter_size[i][0], self.filter_size[i][1], downsample=down_sample))
 
         self.zs = nn.ModuleList()
 
-        for i in range(36):
+        for i in range(8):
             self.zs.append(Embedding(self.zs_size[i], self.z_dim))
 
         self.global_avg = nn.AvgPool2d(8)
@@ -70,13 +67,14 @@ class PrimaryNetwork(nn.Module):
 
         x = F.relu(self.bn1(self.conv1(x)))
 
-        for i in range(18):
+        for i in range(4):
             # if i != 15 and i != 17:
             w1 = self.zs[2*i](self.hope)
             w2 = self.zs[2*i+1](self.hope)
-            x = self.res_net[i](x, w1, w2)
-
+            x= self.res_net[i](x, w1, w2)
+            # print("resblock ", i, "shape ", x.shape)
         x = self.global_avg(x)
         x = self.final(x.view(-1,64))
+        
 
         return x
