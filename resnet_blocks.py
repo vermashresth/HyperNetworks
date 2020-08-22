@@ -36,9 +36,9 @@ class ResNetBlock(nn.Module):
     def forward(self, x, conv1_w, conv2_w):
 
         residual = self.reslayer(x)
-
-        out = F.relu(self.bn1(F.conv2d(x, conv1_w, stride=self.stride1, padding=1)), inplace=True)
-        out = self.bn2(F.conv2d(out, conv2_w, padding=1))
+        print("stride", self.stride1)
+        out = F.relu(self.bn1(F.conv3d(x, conv1_w, stride=self.stride1, padding=1)), inplace=True)
+        out = self.bn2(F.conv3d(out, conv2_w, padding=1))
 
         out += residual
 
