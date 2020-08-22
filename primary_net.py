@@ -42,10 +42,10 @@ class Embedding(nn.Module):
               ww.append(torch.cat(w, dim=1))
           print('niter',torch.cat(ww, dim=0).shape)
           g.append(torch.cat(ww, dim=0))
-        # print(g)
+        print(len(g))
         out = torch.stack(g)
         print('weight', out.shape)
-        return torch.cat(g, dim=0)
+        return torch.stack(g)
         # ww = []
         # h, k = self.z_num
         # for i in range(h):
@@ -60,7 +60,7 @@ class Embedding(nn.Module):
 
 class PrimaryNetwork(nn.Module):
 
-    def __init__(self, z_dim=64):
+    def __init__(self, z_dim=64, bs=8):
         super(PrimaryNetwork, self).__init__()
         self.conv1 = nn.Conv2d(3, 16, 3, padding=1)
         self.bn1 = nn.BatchNorm2d(16)
@@ -97,8 +97,11 @@ class PrimaryNetwork(nn.Module):
         self.global_avg = nn.AvgPool2d(8)
         self.final = nn.Linear(64,10)
 
-        self.z_list0 = [[Parameter(torch.fmod(torch.randn(self.z_dim).cuda(), 2))]]
-        self.z_list1 = [[Parameter(torch.fmod(torch.randn(self.z_dim).cuda(), 2))]]
+        self.z_list0 = []
+        self.z_list1 = []
+        for i in range(bs):
+          self.z_list0.append([Parameter(torch.fmod(torch.randn(self.z_dim).cuda(), 2))])
+          self.z_list1.append([Parameter(torch.fmod(torch.randn(self.z_dim).cuda(), 2))])
 
     def forward(self, x):
 
