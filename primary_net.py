@@ -18,20 +18,44 @@ class Embedding(nn.Module):
 
         h,k = self.z_num
 
-        # for i in range(h):
-        #     for j in range(k):
-        #         self.z_list.append(Parameter(torch.fmod(torch.randn(self.z_dim).cuda(), 2)))
+        for i in range(h):
+            for j in range(k):
+                self.z_list.append(Parameter(torch.fmod(torch.randn(self.z_dim).cuda(), 2)))
 
     def forward(self, hyper_net, z_list):
-        # print("shape", z_list.shape)
-        ww = []
+        try:
+          print("shape", z_list.shape)
+        except:
+          pass
+
+        g=[]
         h, k = self.z_num
-        for i in range(h):
-            w = []
-            for j in range(k):
-                w.append(hyper_net(z_list[i*k + j]))
-            ww.append(torch.cat(w, dim=1))
-        return torch.cat(ww, dim=0)
+        for b in range(len(z_list)):
+          ww = []
+          pr=False
+          for i in range(h):
+              w = []
+              for j in range(k):
+                  print(i, j, h, k, z_list[b][i*k + j].shape)
+                  
+                  w.append(hyper_net(z_list[b][i*k + j]))
+              ww.append(torch.cat(w, dim=1))
+          print('niter',torch.cat(ww, dim=0).shape)
+          g.append(torch.cat(ww, dim=0))
+        # print(g)
+        out = torch.stack(g)
+        print('weight', out.shape)
+        return torch.cat(g, dim=0)
+        # ww = []
+        # h, k = self.z_num
+        # for i in range(h):
+        #     w = []
+        #     for j in range(k):
+        #         print(i, j, h, k, self.z_list[i*k + j].shape)
+        #         w.append(hyper_net(self.z_list[i*k + j]))
+        #     ww.append(torch.cat(w, dim=1))
+        # print('weigtht', torch.cat(ww, dim=0).shape)
+        # return torch.cat(ww, dim=0)
 
 
 class PrimaryNetwork(nn.Module):
@@ -73,8 +97,8 @@ class PrimaryNetwork(nn.Module):
         self.global_avg = nn.AvgPool2d(8)
         self.final = nn.Linear(64,10)
 
-        self.z_list0 = [Parameter(torch.fmod(torch.randn(self.z_dim).cuda(), 2))]
-        self.z_list1 = [Parameter(torch.fmod(torch.randn(self.z_dim).cuda(), 2))]
+        self.z_list0 = [[Parameter(torch.fmod(torch.randn(self.z_dim).cuda(), 2))]]
+        self.z_list1 = [[Parameter(torch.fmod(torch.randn(self.z_dim).cuda(), 2))]]
 
     def forward(self, x):
 
@@ -89,8 +113,8 @@ class PrimaryNetwork(nn.Module):
             print(message.shape)
             a0,a1,b0, b1 = self.break_size[i+1]
             z_list0, z_list1 = torch.split(message, [a0*a1*64,b0*b1*64], dim=-1)
-            self.z_list0 = z_list0.view(-1, a0, a1, 64)
-            self.z_list1 = z_list1.view(-1, b0, b1, 64)
+            self.z_list0 = z_list0.view(-1, a0* a1, 64)
+            self.z_list1 = z_list1.view(-1, b0* b1, 64)
             # print("resblock ", i, "shape ", x.shape)
         x = self.global_avg(x)
         x = self.final(x.view(-1,64))
