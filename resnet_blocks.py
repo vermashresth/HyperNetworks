@@ -10,15 +10,16 @@ class IdentityLayer(nn.Module):
 
 class ResNetBlock(nn.Module):
 
-    def __init__(self, in_size=16, out_size=16, downsample = False):
+    def __init__(self, in_size=16, out_size=16, downsample = False, my=0, my1=0):
         super(ResNetBlock,self).__init__()
         self.out_size = out_size
         self.in_size = in_size
-        if out_size == in_size:
-          self.message_size = (out_size//16)**4
-        else:
-          self.message_size = (out_size//16)**3*in_size//16
+        # if out_size == in_size:
+        #   self.message_size = (out_size//16)**2*2
+        # else:
+        #   self.message_size = (out_size//16)**2 + out_size//16*in_size//16
         # print(self.message_size)
+        self.message_size = my[0]*my[1]+my1[0]*my1[1]
         if downsample:
             self.stride1 = 2
             self.reslayer = nn.Conv2d(in_channels=self.in_size, out_channels=self.out_size, stride=2, kernel_size=1)
@@ -44,4 +45,4 @@ class ResNetBlock(nn.Module):
         out = F.relu(out)
         message = self.message_layer(out.view(-1, self.out_flatten_size))
 
-        return out
+        return out, message
